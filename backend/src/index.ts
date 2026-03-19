@@ -8,7 +8,8 @@ import { errorMiddleware } from './middlewares/error.middleware';
 
 const app = express();
 const httpServer = createServer(app);
-app.use(cors());
+
+app.use(cors({ origin: env.corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

@@ -1,7 +1,7 @@
 import { User } from '../models/user.model';
 import { IUser } from '../types/user.types';
 import { hashPassword, comparePassword } from '../utils/hash.utils';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt.utils';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.utils';
 
 export interface RegisterDto {
   username: string;
@@ -19,6 +19,12 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
+interface MongoError extends Error {
+  code?: number;
+  keyPattern?: Record<string, unknown>;
+  keyValue?: Record<string, unknown>;
+}
+
 export const register = async (dto: RegisterDto): Promise<IUser> => {
   const existingUser = await User.findOne({
     $or: [{ email: dto.email }, { username: dto.username }],
@@ -33,13 +39,26 @@ export const register = async (dto: RegisterDto): Promise<IUser> => {
 
   const hashedPassword = await hashPassword(dto.password);
 
-  const user = await User.create({
-    username: dto.username,
-    email: dto.email,
-    password: hashedPassword,
-  });
-
-  return user;
+  try {
+    const user = await User.create({
+      username: dto.username,
+      email: dto.email,
+      password: hashedPassword,
+    });
+    return user;
+  } catch (error) {
+    // Gestion de la race condition : duplicate key MongoDB
+    const mongoError = error as MongoError;
+    if (mongoError.code === 11000) {
+      if (mongoError.keyPattern?.email || mongoError.keyValue?.email) {
+        throw new Error('EMAIL_ALREADY_EXISTS');
+      }
+      if (mongoError.keyPattern?.username || mongoError.keyValue?.username) {
+        throw new Error('USERNAME_ALREADY_EXISTS');
+      }
+    }
+    throw error;
+  }
 };
 
 export const login = async (dto: LoginDto): Promise<AuthTokens> => {
@@ -66,8 +85,6 @@ export const login = async (dto: LoginDto): Promise<AuthTokens> => {
 };
 
 export const refreshTokens = async (refreshToken: string): Promise<AuthTokens> => {
-  const { verifyRefreshToken } = await import('../utils/jwt.utils');
-
   const payload = verifyRefreshToken(refreshToken);
 
   const user = await User.findById(payload.userId);

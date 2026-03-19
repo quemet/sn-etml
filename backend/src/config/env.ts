@@ -2,11 +2,13 @@ import 'dotenv/config';
 
 const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET'] as const;
 
-requiredEnvVars.forEach((key) => {
-  if (!process.env[key]) {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
-});
+if (process.env.NODE_ENV !== 'test') {
+  requiredEnvVars.forEach((key) => {
+    if (!process.env[key]) {
+      throw new Error(`Missing required environment variable: ${key}`);
+    }
+  });
+}
 
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',

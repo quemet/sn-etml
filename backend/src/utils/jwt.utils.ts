@@ -3,7 +3,7 @@ import { env } from '../config/env';
 import { Types } from 'mongoose';
 
 export interface JwtPayload {
-  userId: Types.ObjectId;
+  userId: string;
   role: 'user' | 'admin';
 }
 
@@ -13,7 +13,7 @@ export const generateAccessToken = (userId: Types.ObjectId, role: 'user' | 'admi
 };
 
 export const generateRefreshToken = (userId: Types.ObjectId, role: 'user' | 'admin'): string => {
-  const options: SignOptions = { expiresIn: env.jwt.expiresIn as SignOptions['expiresIn'] };
+  const options: SignOptions = { expiresIn: env.jwt.refreshExpiresIn as SignOptions['expiresIn'] };
   return jwt.sign({ userId: userId.toString(), role }, env.jwt.refreshSecret, options);
 };
 
