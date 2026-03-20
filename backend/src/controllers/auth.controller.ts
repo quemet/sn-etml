@@ -1,20 +1,43 @@
 import { Request, Response } from 'express';
 import * as authService from '../services/auth.service';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.utils';
 import { sendSuccess, sendError } from '../utils/response.utils';
+import { env } from '../config/env';
+import { User } from '../models/user.model';
+
+const REFRESH_TOKEN_COOKIE = 'refreshToken';
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: env.nodeEnv === 'production',
+  sameSite: 'strict' as const,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
     const user = await authService.register(req.body);
 
-    const userResponse = {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-    };
+    const accessToken = generateAccessToken(user._id, user.role);
+    const refreshToken = generateRefreshToken(user._id, user.role);
 
-    sendSuccess(res, userResponse, 201, 'Inscription réussie');
+    res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, cookieOptions);
+
+    sendSuccess(
+      res,
+      {
+        accessToken,
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt,
+        },
+      },
+      201,
+      'Inscription réussie',
+    );
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === 'EMAIL_ALREADY_EXISTS') {
@@ -32,8 +55,25 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const tokens = await authService.login(req.body);
-    sendSuccess(res, tokens, 200, 'Connexion réussie');
+    const { accessToken, refreshToken, user } = await authService.login(req.body);
+
+    res.cookie(REFRESH_TOKEN_COOKIE, refreshToken, cookieOptions);
+
+    sendSuccess(
+      res,
+      {
+        accessToken,
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt,
+        },
+      },
+      200,
+      'Connexion réussie',
+    );
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === 'INVALID_CREDENTIALS') {
@@ -50,15 +90,48 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const logout = (_req: Request, res: Response): void => {
+  res.clearCookie(REFRESH_TOKEN_COOKIE, cookieOptions);
   sendSuccess(res, null, 200, 'Déconnexion réussie');
 };
 
 export const refresh = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { refreshToken } = req.body as { refreshToken: string };
-    const tokens = await authService.refreshTokens(refreshToken);
-    sendSuccess(res, tokens, 200, 'Token rafraîchi');
-  } catch (error) {
+    const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE] as string;
+
+    if (!refreshToken) {
+      sendError(res, 'Refresh token manquant', 401);
+      return;
+    }
+
+    const payload = verifyRefreshToken(refreshToken);
+    const user = await User.findById(payload.userId);
+
+    if (!user || !user.isActive) {
+      sendError(res, 'Utilisateur introuvable', 401);
+      return;
+    }
+
+    const accessToken = generateAccessToken(user._id, user.role);
+    const newRefreshToken = generateRefreshToken(user._id, user.role);
+
+    res.cookie(REFRESH_TOKEN_COOKIE, newRefreshToken, cookieOptions);
+
+    sendSuccess(
+      res,
+      {
+        accessToken,
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt,
+        },
+      },
+      200,
+      'Token rafraîchi',
+    );
+  } catch {
     sendError(res, 'Refresh token invalide ou expiré', 401);
   }
 };

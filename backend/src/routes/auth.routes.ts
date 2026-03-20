@@ -24,10 +24,6 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Le mot de passe est requis'),
 });
 
-const refreshSchema = z.object({
-  refreshToken: z.string().min(1, 'Le refresh token est requis'),
-});
-
 // POST /auth/register
 router.post('/register', validate(registerSchema), authController.register);
 
@@ -38,6 +34,6 @@ router.post('/login', validate(loginSchema), authController.login);
 router.post('/logout', authMiddleware, authController.logout);
 
 // POST /auth/refresh
-router.post('/refresh', validate(refreshSchema), authController.refresh);
+router.post('/refresh', authController.refresh);
 
 export default router;
