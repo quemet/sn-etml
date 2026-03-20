@@ -12,4 +12,10 @@ export const registerSchema = z
     path: ['confirmPassword'],
   })
 
+export const loginSchema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(6, 'Password must contain at least 6 characters'),
+})
+
 export type RegisterFormData = z.infer<typeof registerSchema>
+export type LoginFormData = z.infer<typeof loginSchema>

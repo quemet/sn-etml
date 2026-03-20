@@ -1,37 +1,34 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
-import { registerSchema, type RegisterFormData } from '@/features/auth/schemas/auth.schema'
-import { useRegister } from '@/features/auth/composables/useRegister'
+import { loginSchema, type LoginFormData } from '@/features/auth/schemas/auth.schema'
+import { useLogin } from '@/features/auth/composables/useLogin'
 
-const form = reactive<RegisterFormData>({
-  username: '',
+const form = reactive<LoginFormData>({
   email: '',
   password: '',
-  confirmPassword: '',
 })
 
-const errors = reactive<Partial<Record<keyof RegisterFormData, string>>>({})
-const { isLoading, error, handleRegister } = useRegister()
+const errors = reactive<Partial<Record<keyof LoginFormData, string>>>({})
+const { isLoading, error, handleLogin } = useLogin()
 
 const onSubmit = async () => {
-  Object.keys(errors).forEach((k) => delete errors[k as keyof RegisterFormData])
+  Object.keys(errors).forEach((k) => delete errors[k as keyof LoginFormData])
 
-  const parsed = registerSchema.safeParse(form)
+  const parsed = loginSchema.safeParse(form)
+
   if (!parsed.success) {
     for (const issue of parsed.error.issues) {
-      const key = issue.path[0] as keyof RegisterFormData
+      const key = issue.path[0] as keyof LoginFormData
       if (key && !errors[key]) errors[key] = issue.message
     }
     return
   }
 
-  const { confirmPassword, ...dto } = parsed.data
-  void confirmPassword
-  await handleRegister(dto)
+  await handleLogin(form)
 }
 
-const onSocialRegister = (provider: 'Google' | 'GitHub' | 'Apple' | 'Microsoft') => {
-  window.alert(`Inscription ${provider} : implémentation à venir.`)
+const onSocialLogin = (provider: 'Google' | 'GitHub' | 'Apple' | 'Microsoft') => {
+  window.alert(`Connexion ${provider} : implémentation à venir.`)
 }
 </script>
 
@@ -43,35 +40,7 @@ const onSocialRegister = (provider: 'Google' | 'GitHub' | 'Apple' | 'Microsoft')
   >
     <p v-if="error" role="alert" class="form-error-global">{{ error }}</p>
 
-    <div class="register-field-block">
-      <label for="username" class="field-label">Username :</label>
-      <div :class="`field-input-row${errors.username ? ' input-error' : ''}`">
-        <div class="field-icon">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-          </svg>
-        </div>
-        <div class="field-separator"></div>
-        <input
-          id="username"
-          v-model="form.username"
-          type="text"
-          placeholder="Type your username here..."
-          autocomplete="username"
-        />
-      </div>
-      <p v-if="errors.username" role="alert" class="field-error">{{ errors.username }}</p>
-    </div>
-
-    <div class="register-field-block">
+    <div class="login-field-block">
       <label for="email" class="field-label">Email :</label>
       <div :class="`field-input-row${errors.email ? ' input-error' : ''}`">
         <div class="field-icon">
@@ -92,15 +61,15 @@ const onSocialRegister = (provider: 'Google' | 'GitHub' | 'Apple' | 'Microsoft')
           id="email"
           v-model="form.email"
           type="email"
-          placeholder="Type your personal email right here..."
+          placeholder="Type your email here..."
           autocomplete="email"
         />
       </div>
       <p v-if="errors.email" role="alert" class="field-error">{{ errors.email }}</p>
     </div>
 
-    <div class="register-field-block">
-      <label for="password" class="field-label">Enter your password :</label>
+    <div class="login-field-block">
+      <label for="password" class="field-label">Password :</label>
       <div :class="`field-input-row${errors.password ? ' input-error' : ''}`">
         <div class="field-icon">
           <svg
@@ -122,50 +91,19 @@ const onSocialRegister = (provider: 'Google' | 'GitHub' | 'Apple' | 'Microsoft')
           v-model="form.password"
           type="password"
           placeholder="Type your password here..."
-          autocomplete="new-password"
+          autocomplete="current-password"
         />
       </div>
       <p v-if="errors.password" role="alert" class="field-error">{{ errors.password }}</p>
     </div>
 
-    <div class="register-field-block">
-      <label for="confirmPassword" class="field-label">Confirm your password :</label>
-      <div :class="`field-input-row${errors.confirmPassword ? ' input-error' : ''}`">
-        <div class="field-icon">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <rect x="5" y="11" width="14" height="10" rx="2" />
-            <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-            <circle cx="12" cy="16" r="1" fill="currentColor" />
-          </svg>
-        </div>
-        <div class="field-separator"></div>
-        <input
-          id="confirmPassword"
-          v-model="form.confirmPassword"
-          type="password"
-          placeholder="Type your confirm password here..."
-          autocomplete="new-password"
-        />
-      </div>
-      <p v-if="errors.confirmPassword" role="alert" class="field-error">
-        {{ errors.confirmPassword }}
-      </p>
-    </div>
-
-    <p class="register-footer">
-      Already have an account? <RouterLink to="/login">Sign in</RouterLink>
+    <p class="login-footer">
+      Don't have an account? <RouterLink to="/register">Sign up</RouterLink>
     </p>
 
-    <div class="register-submit-block">
+    <div class="login-submit-block">
       <button type="submit" class="submit-btn" :disabled="isLoading">
-        {{ isLoading ? 'Loading...' : 'Submit' }}
+        {{ isLoading ? 'Loading...' : 'Sign in' }}
       </button>
     </div>
 
@@ -173,7 +111,7 @@ const onSocialRegister = (provider: 'Google' | 'GitHub' | 'Apple' | 'Microsoft')
       <div class="social-divider"><span>ou continuer avec</span></div>
 
       <div class="social-buttons">
-        <button type="button" class="social-btn" @click="onSocialRegister('Google')">
+        <button type="button" class="social-btn" @click="onSocialLogin('Google')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
             <path
               fill="#4285F4"
@@ -195,7 +133,7 @@ const onSocialRegister = (provider: 'Google' | 'GitHub' | 'Apple' | 'Microsoft')
           <span>Google</span>
         </button>
 
-        <button type="button" class="social-btn" @click="onSocialRegister('GitHub')">
+        <button type="button" class="social-btn" @click="onSocialLogin('GitHub')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
             <path
               fill="currentColor"
@@ -205,7 +143,7 @@ const onSocialRegister = (provider: 'Google' | 'GitHub' | 'Apple' | 'Microsoft')
           <span>GitHub</span>
         </button>
 
-        <button type="button" class="social-btn" @click="onSocialRegister('Apple')">
+        <button type="button" class="social-btn" @click="onSocialLogin('Apple')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
             <path
               fill="currentColor"
@@ -215,7 +153,7 @@ const onSocialRegister = (provider: 'Google' | 'GitHub' | 'Apple' | 'Microsoft')
           <span>Apple</span>
         </button>
 
-        <button type="button" class="social-btn" @click="onSocialRegister('Microsoft')">
+        <button type="button" class="social-btn" @click="onSocialLogin('Microsoft')">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
             <path fill="#F25022" d="M1 1h10v10H1z" />
             <path fill="#00A4EF" d="M13 1h10v10H13z" />
