@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
-import { connectDB } from './config/db';
 import { env } from './config/env';
 import authRoutes from './routes/auth.routes';
 import { errorMiddleware } from './middlewares/error.middleware';
@@ -23,13 +22,17 @@ app.get('/health', (_req, res) => {
 
 app.use(errorMiddleware);
 
-const start = async (): Promise<void> => {
-  await connectDB();
-  httpServer.listen(env.port, () => {
-    console.warn(`🚀 Serveur démarré sur le port ${env.port}`);
-  });
-};
+if (require.main === module) {
+  const { connectDB } = require('./config/db');
 
-start();
+  const start = async (): Promise<void> => {
+    await connectDB();
+    httpServer.listen(env.port, () => {
+      console.warn(`🚀 Serveur démarré sur le port ${env.port}`);
+    });
+  };
+
+  void start();
+}
 
 export { app, httpServer };

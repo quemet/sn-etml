@@ -1,22 +1,15 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const registerSchema = z
   .object({
-    username: z
-      .string()
-      .min(3, "Le nom d'utilisateur doit contenir au moins 3 caractères")
-      .max(30, "Le nom d'utilisateur ne peut pas dépasser 30 caractères")
-      .trim(),
-    email: z.string().email('Email invalide').trim(),
-    password: z
-      .string()
-      .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
-      .max(100, 'Le mot de passe ne peut pas dépasser 100 caractères'),
-    confirmPassword: z.string(),
+    username: z.string().min(3, 'Username must contain at least 3 characters'),
+    email: z.string().email('Invalid email'),
+    password: z.string().min(6, 'Password must contain at least 6 characters'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Les mots de passe ne correspondent pas',
+    message: 'Passwords do not match',
     path: ['confirmPassword'],
-  });
+  })
 
-export type RegisterFormData = z.infer<typeof registerSchema>;
+export type RegisterFormData = z.infer<typeof registerSchema>

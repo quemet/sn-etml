@@ -90,7 +90,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const logout = (_req: Request, res: Response): void => {
-  res.clearCookie(REFRESH_TOKEN_COOKIE);
+  res.clearCookie(REFRESH_TOKEN_COOKIE, cookieOptions);
   sendSuccess(res, null, 200, 'Déconnexion réussie');
 };
 

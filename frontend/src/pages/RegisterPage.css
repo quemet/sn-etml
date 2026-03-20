@@ -1,35 +1,61 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');
 
-* {
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.register-root * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
 .register-root {
-  min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
   background: #f5f5f5;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Inter', sans-serif;
-  padding: 2rem;
+  padding: 1rem;          /* moins grand qu'avant */
+  overflow: hidden;       /* enlève le scroll de la page */
 }
 
 .register-container {
-  width: 100%;
-  max-width: 520px;
+  width: min(86vw, 700px); /* un peu moins large */
+  height: 65dvh;
   background: #fff;
   border-radius: 12px;
-  padding: 1rem;
+  padding: 2rem;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+  overflow: hidden;        /* pas de scroll interne */
+}
+
+/* centre et contraint le formulaire */
+.register-container form {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  justify-content: space-evenly; /* meilleure répartition verticale */
+  gap: 14px;
+}
+
+.register-submit-block {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
 }
 
 .register-header {
   text-align: center;
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid #ebebeb;
 }
 
@@ -49,8 +75,6 @@
   font-size: 0.8rem;
   font-weight: 400;
   color: #555;
-  text-align: start;
-  padding-left: 1rem;
 }
 
 .field-input-row {
@@ -133,7 +157,7 @@
   text-align: center;
   font-size: 0.8rem;
   color: #888;
-  margin-top: 2rem;
+  margin-top: 0.5rem;
 }
 
 .register-footer a {
@@ -144,12 +168,6 @@
 
 .register-footer a:hover {
   text-decoration: underline;
-}
-
-.register-submit-block {
-  display: flex;
-  justify-content: center;
-  margin-top: 1rem;
 }
 
 .submit-btn {
@@ -168,9 +186,11 @@
 .submit-btn:hover:not(:disabled) {
   background: #3a7ec8;
 }
+
 .submit-btn:active:not(:disabled) {
   transform: scale(0.98);
 }
+
 .submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
