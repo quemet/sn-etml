@@ -6,7 +6,7 @@ import LoginForm from '@/features/auth/components/LoginForm.vue'
   <div class="login-root">
     <div class="login-container">
       <div class="login-header">
-        <h1 class="register-title">Login</h1>
+        <h1 class="login-title">Login</h1>
       </div>
       <LoginForm />
     </div>
