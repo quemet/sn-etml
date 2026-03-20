@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import { connectDB } from './config/db';
 import { env } from './config/env';
@@ -12,24 +13,23 @@ const httpServer = createServer(app);
 app.use(cors({ origin: env.corsOrigin, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 
 app.get('/health', (_req, res) => {
-  res.status(200).json({ success: true, message: 'API is healthy' });
+  res.status(200).json({ status: 'ok' });
 });
 
 app.use(errorMiddleware);
 
-const startServer = async (): Promise<void> => {
-  if (env.nodeEnv !== 'test') {
-    await connectDB();
-    httpServer.listen(env.port, () => {
-      console.log(`🚀 Server running on port ${env.port} in ${env.nodeEnv} mode`);
-    });
-  }
+const start = async (): Promise<void> => {
+  await connectDB();
+  httpServer.listen(env.port, () => {
+    console.warn(`🚀 Serveur démarré sur le port ${env.port}`);
+  });
 };
 
-startServer();
+start();
 
-export default app;
+export { app, httpServer };

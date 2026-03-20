@@ -14,7 +14,14 @@ services:
     networks:
       - backend-network
     healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "db.adminCommand({ ping: 1 }).ok",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,14 +36,26 @@ services:
       - "3000:3000"
     env_file:
       - ./backend/.env
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
+    environment:
+      MONGO_URI: mongodb://root:root@db:27017/sn-etml?authSource=admin
     depends_on:
       db:
         condition: service_healthy
     networks:
       - backend-network
+      - frontend-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend-container
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
       - frontend-network
 
 networks:
